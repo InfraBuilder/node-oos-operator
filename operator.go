@@ -18,7 +18,7 @@ type NodeOperator struct {
 	clientset  kubernetes.Interface
 	logger     *logrus.Logger
 	nodeStates map[string]*NodeState
-	workqueue  workqueue.RateLimitingInterface
+	workqueue  workqueue.TypedRateLimitingInterface[string]
 	controller cache.Controller
 	indexer    cache.Indexer
 }
@@ -38,7 +38,7 @@ func NewNodeOperator(clientset kubernetes.Interface, logger *logrus.Logger) *Nod
 		clientset:  clientset,
 		logger:     logger,
 		nodeStates: make(map[string]*NodeState),
-		workqueue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "nodes"),
+		workqueue:  workqueue.NewTypedRateLimitingQueue[string](workqueue.DefaultTypedControllerRateLimiter[string]()),
 	}
 }
 
@@ -54,11 +54,10 @@ func (o *NodeOperator) Run(ctx context.Context) error {
 	)
 
 	// Create the controller
-	o.indexer, o.controller = cache.NewIndexerInformer(
-		watchlist,
-		&corev1.Node{},
-		time.Second*30,
-		cache.ResourceEventHandlerFuncs{
+	store, controller := cache.NewInformerWithOptions(cache.InformerOptions{
+		ListerWatcher: watchlist,
+		ObjectType:    &corev1.Node{},
+		Handler: cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				if node, ok := obj.(*corev1.Node); ok {
 					o.workqueue.Add(node.Name)
@@ -75,8 +74,11 @@ func (o *NodeOperator) Run(ctx context.Context) error {
 				}
 			},
 		},
-		cache.Indexers{},
-	)
+		ResyncPeriod: time.Second * 30,
+		Indexers:     cache.Indexers{},
+	})
+	o.indexer = store.(cache.Indexer)
+	o.controller = controller
 
 	// Start the controller
 	go o.controller.Run(ctx.Done())
@@ -103,18 +105,16 @@ func (o *NodeOperator) runWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			if obj, shutdown := o.workqueue.Get(); shutdown {
+			if nodeName, shutdown := o.workqueue.Get(); shutdown {
 				return
 			} else {
 				func() {
-					defer o.workqueue.Done(obj)
-					if nodeName, ok := obj.(string); ok {
-						if err := o.processNode(nodeName); err != nil {
-							o.logger.WithError(err).WithField("node", nodeName).Error("Failed to process node")
-							o.workqueue.AddRateLimited(obj)
-						} else {
-							o.workqueue.Forget(obj)
-						}
+					defer o.workqueue.Done(nodeName)
+					if err := o.processNode(nodeName); err != nil {
+						o.logger.WithError(err).WithField("node", nodeName).Error("Failed to process node")
+						o.workqueue.AddRateLimited(nodeName)
+					} else {
+						o.workqueue.Forget(nodeName)
 					}
 				}()
 			}
