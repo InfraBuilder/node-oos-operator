@@ -1,0 +1,13 @@
+.github/
+chart/
+deploy/
+.git/
+.gitignore
+.claude
+.vscode/
+.idea/
+.DS_Store
+.env
+.env.*
+
+node-oos-operator
