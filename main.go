@@ -36,6 +36,9 @@ const (
 	OutOfServiceTaint = "node.kubernetes.io/out-of-service"
 	TaintEffect       = "NoExecute"
 	TaintValue        = "shutdown"
+
+	DefaultNotReadyThreshold = "300s"
+	DefaultRecoveryThreshold = "60s"
 )
 
 func init() {
@@ -91,7 +94,7 @@ func runOperator(cmd *cobra.Command, args []string) {
 	// Load configuration from environment variables
 	notReadyThresholdStr := os.Getenv("NOT_READY_THRESHOLD")
 	if notReadyThresholdStr == "" {
-		notReadyThresholdStr = "300s" // Default 5 minutes
+		notReadyThresholdStr = DefaultNotReadyThreshold
 	}
 	var err error
 	notReadyThreshold, err = time.ParseDuration(notReadyThresholdStr)
@@ -101,7 +104,7 @@ func runOperator(cmd *cobra.Command, args []string) {
 
 	recoveryThresholdStr := os.Getenv("RECOVERY_THRESHOLD")
 	if recoveryThresholdStr == "" {
-		recoveryThresholdStr = "60s" // Default 1 minute
+		recoveryThresholdStr = DefaultRecoveryThreshold
 	}
 	recoveryThreshold, err = time.ParseDuration(recoveryThresholdStr)
 	if err != nil {
