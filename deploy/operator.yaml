@@ -86,10 +86,8 @@ spec:
           type: RuntimeDefault
       containers:
       - name: operator
-        image: node-oos-operator:latest
-        imagePullPolicy: IfNotPresent
-        args:
-        - --metrics-addr=:8080
+        image: infrabuilder/node-oos-operator:latest
+        imagePullPolicy: Always
         env:
         - name: NOT_READY_THRESHOLD
           value: "300s"
@@ -130,16 +128,13 @@ spec:
           capabilities:
             drop:
             - ALL
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-      volumes:
-      - name: tmp
-        emptyDir: {}
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
       - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/controlplane
         operator: Exists
         effect: NoSchedule
       - key: node-role.kubernetes.io/master

@@ -1,5 +1,14 @@
 # Node Out-of-Service Operator
 
+
+[![Docker Image Size](https://img.shields.io/docker/image-size/infrabuilder/node-oos-operator/latest)](https://hub.docker.com/r/infrabuilder/node-oos-operator)
+[![Docker Pulls](https://img.shields.io/docker/pulls/infrabuilder/node-oos-operator)](https://hub.docker.com/r/infrabuilder/node-oos-operator)
+[![Docker Image Vulnerabilities](https://img.shields.io/badge/security-scanned-brightgreen)](https://hub.docker.com/r/infrabuilder/node-oos-operator)
+[![GitHub Repo](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/infrabuilder/node-oos-operator)
+[![CI](https://github.com/infrabuilder/node-oos-operator/actions/workflows/dockerhub-build-push.yml/badge.svg)](https://github.com/infrabuilder/node-oos-operator/actions)
+[![Docker Weekly Build](https://img.shields.io/badge/autobuild-weekly-brightgreen)](https://hub.docker.com/r/infrabuilder/node-oos-operator)
+
+
 A Kubernetes operator that automatically manages node out-of-service taints based on node readiness status.
 
 ## Features
